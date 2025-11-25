@@ -31,8 +31,16 @@ function calculateBonusByProfit(index, total, seller) { //не менять па
  */
 function analyzeSalesData(data, options) { //не менять параметры
     // @TODO: Проверка входных данных
-    if (!data || !Array.isArray(data.purchases) || !Array.isArray(data.products) || !Array.isArray(data.sellers)) {
+    if (!data ||
+        !Array.isArray(data.purchases) ||
+        !Array.isArray(data.products) ||
+        !Array.isArray(data.sellers)
+    ) {
         return [];
+    }
+
+    if (!options || typeof options !== "object") {
+        options = {};
     }
 
     const { purchases, products, sellers } = data;
@@ -48,27 +56,40 @@ function analyzeSalesData(data, options) { //не менять параметр�
     const productById = {};
     const sellerById = {};
 
-    for (const p of products) productById[p.product_id] = p;
-    for (const s of sellers) sellerById[s.seller_id] = {...s, revenue: 0, profit: 0, sales_count: 0, top_products: {} };
+    for (const p of products) {
+        productById[p.product_id] = p;
+    }
+
+    for (const s of sellers) {
+        sellerById[s.seller_id] = {
+            ...s,
+            revenue: 0,
+            profit: 0,
+            sales_count: 0,
+            top_products: {}
+        };
+    }
 
     // @TODO: Расчет выручки и прибыли для каждого продавца
     for (const purchase of purchases) {
-        const s = sellerById[purchase.seller_id];
-        const pr = productById[purchase.product_id];
+        const seller = sellerById[purchase.seller_id];
+        const product = productById[purchase.product_id];
 
-        if (!s || !pr) continue;
+        if (!seller || !product) continue;
 
-        const revenue = calculateSimpleRevenue(purchase, pr);
-        const profit = revenue - pr.prime_cost * purchase.count;
+        const revenue = calculateSimpleRevenue(purchase, product);
+        const profit = revenue - product.prime_cost * purchase.count;
 
-        s.revenue += revenue;
-        s.profit += profit;
-        s.sales_count += purchase.count;
-        s.top_products[purchase.product_id] = (s.top_products[purchase.product_id] || 0) + purchase.count;
+        seller.revenue += revenue;
+        seller.profit += profit;
+        seller.sales_count += purchase.count;
+
+        seller.top_products[purchase.product_id] =
+            (seller.top_products[purchase.product_id] || 0) + purchase.count;
     }
 
-    for (const s of Object.values(sellerById)) {
-        s.top_products = Object.entries(s.top_products)
+    for (const seller of Object.values(sellerById)) {
+        seller.top_products = Object.entries(seller.top_products)
             .map(([product_id, count]) => ({
                 product_id: Number(product_id),
                 sales_count: count
@@ -77,14 +98,12 @@ function analyzeSalesData(data, options) { //не менять параметр�
     }
 
 
-
-
     // @TODO: Сортировка продавцов по прибыли
     const sorted = Object.values(sellerById).sort((a, b) => b.profit - a.profit);
 
     // @TODO: Назначение премий на основе ранжирования
     for (let i = 0; i < sorted.length; i++) {
-        sorted[i].bonus = calculateBonusByProfit(i + 1, sorted.length, sorted[i]);
+        sorted[i].bonus = calculateBonusByProfit(i, sorted.length, sorted[i]);
     }
 
     // @TODO: Подготовка итоговой коллекции с нужными полями
@@ -97,3 +116,4 @@ function analyzeSalesData(data, options) { //не менять параметр�
         sales_count: s.sales_count,
         top_products: s.top_products
     }));
+}
