@@ -125,3 +125,9 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
 
 // @TODO: Подготовка итоговой коллекции с нужными полями
+
+module.exports = {
+    calculateSimpleRevenue,
+    calculateBonusByProfit,
+    analyzeSalesData
+};
