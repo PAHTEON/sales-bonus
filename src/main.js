@@ -69,7 +69,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
         top_products: []
     }));
 
-    const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.id, s]));
+    const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.seller_id, s]));
     const productIndex = Object.fromEntries(data.products.map(p => [p.sku, p]));
 
     data.purchase_records.forEach(record => {
