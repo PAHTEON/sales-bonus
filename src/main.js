@@ -12,16 +12,17 @@ function calculateSimpleRevenue(purchase, _product) { //не менять пар
 /**
  * Функция для расчета бонусов
  * @param index порядковый номер в отсортированном массиве
+ * @param total
  * @param seller карточка продавца
  * @returns {number}
  */
 function calculateBonusByProfit(index, total, seller) { //не менять параметры
     // @TODO: Расчет бонуса от позиции в рейтинге
     const profit = seller.profit;
-    if (index === 0) return +(profit * 0.15).toFixed(2); // 1 место
-    if (index === 1 || index === 2) return +(profit * 0.10).toFixed(2); // 2-3 места
-    if (index === total - 1) return 0; // последний
-    return +(profit * 0.05).toFixed(2); // остальные
+    if (index === 0) return +(profit * 0.15).toFixed(2);
+    if (index === 1 || index === 2) return +(profit * 0.10).toFixed(2);
+    if (index === total - 1) return 0;
+    return +(profit * 0.05).toFixed(2);
 }
 
 
@@ -76,7 +77,6 @@ function analyzeSalesData(data, options) { //не менять параметр�
             const cost = product.purchase_price * item.quantity;
             seller.profit += revenue - cost;
 
-            // Учёт количества проданных товаров
             if (!seller.products_sold[item.sku]) seller.products_sold[item.sku] = 0;
             seller.products_sold[item.sku] += item.quantity;
         });
@@ -88,9 +88,9 @@ function analyzeSalesData(data, options) { //не менять параметр�
     sellerStats.sort((a, b) => b.profit - a.profit);
 
     // @TODO: Назначение премий на основе 
-    ellerStats.forEach((seller, index) => {
+    sellerStats.forEach((seller, index) => {
         seller.bonus = calculateBonus(index, sellerStats.length, seller);
-        ранжирования
+
 
         // @TODO: Подготовка итоговой коллекции с нужными полями
 
