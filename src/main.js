@@ -61,12 +61,10 @@ function analyzeSalesData(data, options) { //не менять параметр�
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
-        revenue: 0,
-        profit: 0,
+        revenueCents: 0,
+        profitCents: 0,
         sales_count: 0,
-        products_sold: {},
-        bonus: 0,
-        top_products: []
+        products_sold: {}
     }));
 
     const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.seller_id, s]));
@@ -82,11 +80,11 @@ function analyzeSalesData(data, options) { //не менять параметр�
             const product = productIndex[item.sku];
             if (!product) return;
 
-            const revenueCents = Math.round(calculateRevenue(item, product) * 100);
-            const costCents = Math.round(product.purchase_price * item.quantity * 100);
+            const revenue = calculateRevenue(item, product);
+            const cost = product.purchase_price * item.quantity;
 
-            seller.revenueCents += revenueCents;
-            seller.profitCents += (revenueCents - costCents);
+            seller.revenueCents += revenue;
+            seller.profitCents += revenue - cost;
 
             if (!seller.products_sold[item.sku]) seller.products_sold[item.sku] = 0;
             seller.products_sold[item.sku] += item.quantity;
@@ -95,30 +93,28 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     // @TODO: Сортировка продавцов по прибыли
 
-    sellerStats.sort((a, b) => b.profit - a.profit);
+    sellerStats.sort((a, b) => b.profitCents - a.profitCents);
 
     const totalSellers = sellerStats.length;
 
     // @TODO: Назначение премий на основе 
     sellerStats.forEach((seller, index) => {
-        seller.bonus = +calculateBonus(index, totalSellers, {
+        const sellerForBonus = {
             ...seller,
-            revenue: seller.revenueCents / 100,
-            profit: seller.profitCents / 100
-        }).toFixed(2);
+            revenue: +seller.revenueCents.toFixed(2),
+            profit: +seller.profitCents.toFixed(2)
+        };
+
+        seller.bonus = +calculateBonus(index, totalSellers, sellerForBonus).toFixed(2);
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
 
+        seller.revenue = +seller.revenueCents.toFixed(2);
+        seller.profit = +seller.profitCents.toFixed(2);
 
-        // @TODO: Подготовка итоговой коллекции с нужными полями
-
-        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
-        seller.profit = +(seller.profitCents / 100).toFixed(2);
-
-        // Убираем временные поля
         delete seller.revenueCents;
         delete seller.profitCents;
         delete seller.products_sold;
@@ -126,3 +122,6 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     return sellerStats;
 }
+
+
+// @TODO: Подготовка итоговой коллекции с нужными полями
