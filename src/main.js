@@ -6,8 +6,8 @@
  */
 function calculateSimpleRevenue(purchase, _product) { //не менять параметры
     // @TODO: Расчет выручки от операции
-    const quantity = Number(purchase.count ? ? 0);
-    const price = Number(_product.price ? ? 0);
+    const quantity = purchase.count != null ? Number(purchase.count) : 0;
+    const price = _product.price != null ? Number(_product.price) : 0;
     return +(quantity * price).toFixed(2);
 }
 
@@ -54,10 +54,10 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
             const saleRevenue = calculateSimpleRevenue(purchase, product);
             revenue += saleRevenue;
-            sales_count += purchase.count ? ? 0;
+            sales_count += purchase.count != null ? purchase.count : 0;
 
             if (!productSales[product.name]) productSales[product.name] = 0;
-            productSales[product.name] += purchase.count ? ? 0;
+            productSales[product.name] += purchase.count != null ? purchase.count : 0;
         });
 
         const top_products = Object.entries(productSales)
