@@ -82,10 +82,11 @@ function analyzeSalesData(data, options) { //не менять параметр�
             const product = productIndex[item.sku];
             if (!product) return;
 
-            const revenue = calculateRevenue(item, product);
-            const cost = product.purchase_price * item.quantity;
-            seller.revenue += revenue;
-            seller.profit += revenue - cost;
+            const revenue = +calculateRevenue(item, product).toFixed(2);
+            const cost = +(product.purchase_price * item.quantity).toFixed(2);
+
+            seller.revenue = +(seller.revenue + revenue).toFixed(2);
+            seller.profit = +(seller.profit + (revenue - cost)).toFixed(2);
 
             if (!seller.products_sold[item.sku]) seller.products_sold[item.sku] = 0;
             seller.products_sold[item.sku] += item.quantity;
@@ -115,8 +116,8 @@ function analyzeSalesData(data, options) { //не менять параметр�
     return sellerStats.map(seller => ({
         seller_id: seller.seller_id,
         name: seller.name,
-        revenue: +seller.revenue.toFixed(2),
-        profit: +seller.profit.toFixed(2),
+        revenue: seller.revenue,
+        profit: seller.profit,
         sales_count: seller.sales_count,
         top_products: seller.top_products,
         bonus: seller.bonus
