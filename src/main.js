@@ -41,16 +41,15 @@ function analyzeSalesData(data, options) { //не менять параметр�
         throw new Error('Некорректные входные данные');
     }
 
-    if (!options || typeof options !== 'object') {
-        throw new Error('Не передан объект опций');
+    if (!options || typeof options !== "object") {
+        throw new Error('Не переданы опции для анализа');
     }
 
     const { calculateRevenue, calculateBonus } = options;
-    if (typeof calculateRevenue !== 'function' || typeof calculateBonus !== 'function') {
-        throw new Error('Не переданы функции для расчёта выручки или бонуса');
+
+    if (typeof calculateRevenue !== "function" || typeof calculateBonus !== "function") {
+        throw new Error('Опции должны содержать функции calculateRevenue и calculateBonus');
     }
-
-
 
     // @TODO: Проверка наличия опций
     // @TODO: Подготовка промежуточных данных для сбора статистики
@@ -73,15 +72,16 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
-        if (!seller) return; // защита на случай некорректного seller_id
+        if (!seller) return;
         seller.sales_count += 1;
-        seller.revenue += record.total_amount - record.total_discount;
 
         record.items.forEach(item => {
             const product = productIndex[item.sku];
             if (!product) return;
 
             const revenue = calculateRevenue(item, product);
+            seller.revenue += revenue;
+
             const cost = product.purchase_price * item.quantity;
             seller.profit += revenue - cost;
 
@@ -97,27 +97,23 @@ function analyzeSalesData(data, options) { //не менять параметр�
     sellerStats.sort((a, b) => b.profit - a.profit);
 
     // @TODO: Назначение премий на основе ранжирования
-    const totalSellers = sellerStats.length;
     sellerStats.forEach((seller, index) => {
-        seller.bonus = +calculateBonus(index, totalSellers, seller).toFixed(2);
+        seller.bonus = calculateBonus(index, sellerStats.length, seller);
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
-
-        seller.revenue = +seller.revenue.toFixed(2);
-        seller.profit = +seller.profit.toFixed(2);
     });
     // @TODO: Подготовка итоговой коллекции с нужными полями
 
     return sellerStats.map(seller => ({
         seller_id: seller.id,
         name: seller.name,
-        revenue: seller.revenue,
-        profit: seller.profit,
+        revenue: +seller.revenue.toFixed(2),
+        profit: +seller.profit.toFixed(2),
         sales_count: seller.sales_count,
         top_products: seller.top_products,
-        bonus: seller.bonus
+        bonus: +seller.bonus.toFixed(2)
     }));
 }
