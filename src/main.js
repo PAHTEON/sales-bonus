@@ -70,6 +70,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
         };
     }
 
+
     // @TODO: Расчет выручки и прибыли для каждого продавца
     for (const purchase of purchases) {
         const seller = sellerById[purchase.seller_id];
