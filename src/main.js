@@ -82,17 +82,16 @@ function analyzeSalesData(data, options) { //не менять параметр�
             const product = productIndex[item.sku];
             if (!product) return;
 
-            const revenue = +calculateRevenue(item, product).toFixed(2);
-            const cost = +(product.purchase_price * item.quantity).toFixed(2);
+            const revenueCents = Math.round(calculateRevenue(item, product) * 100);
+            const costCents = Math.round(product.purchase_price * item.quantity * 100);
 
-            seller.revenue = +(seller.revenue + revenue).toFixed(2);
-            seller.profit = +(seller.profit + (revenue - cost)).toFixed(2);
+            seller.revenueCents += revenueCents;
+            seller.profitCents += (revenueCents - costCents);
 
             if (!seller.products_sold[item.sku]) seller.products_sold[item.sku] = 0;
             seller.products_sold[item.sku] += item.quantity;
         });
     });
-
 
     // @TODO: Сортировка продавцов по прибыли
 
@@ -102,24 +101,28 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     // @TODO: Назначение премий на основе 
     sellerStats.forEach((seller, index) => {
-        seller.bonus = +calculateBonus(index, totalSellers, seller).toFixed(2);
+        seller.bonus = +calculateBonus(index, totalSellers, {
+            ...seller,
+            revenue: seller.revenueCents / 100,
+            profit: seller.profitCents / 100
+        }).toFixed(2);
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
+
+
+        // @TODO: Подготовка итоговой коллекции с нужными полями
+
+        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
+        seller.profit = +(seller.profitCents / 100).toFixed(2);
+
+        // Убираем временные поля
+        delete seller.revenueCents;
+        delete seller.profitCents;
+        delete seller.products_sold;
     });
 
-
-    // @TODO: Подготовка итоговой коллекции с нужными полями
-
-    return sellerStats.map(seller => ({
-        seller_id: seller.seller_id,
-        name: seller.name,
-        revenue: seller.revenue,
-        profit: seller.profit,
-        sales_count: seller.sales_count,
-        top_products: seller.top_products,
-        bonus: seller.bonus
-    }));
+    return sellerStats;
 }
