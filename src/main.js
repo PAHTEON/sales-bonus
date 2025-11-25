@@ -6,36 +6,29 @@
  */
 function calculateSimpleRevenue(purchase, _product) { //не менять параметры
     // @TODO: Расчет выручки от операции
-    const quantity = Number(purchase.quantity) || 0;
-    const salePrice = Number(purchase.sale_price) || 0;
-    const discount = Number(purchase.discount) || 0;
-
-    const revenue = salePrice * quantity * (1 - discount / 100);
-    return +revenue.toFixed(2);
+    const discountFactor = 1 - (purchase.discount / 100);
+    return purchase.sale_price * purchase.quantity * discountFactor;
 }
 
 /**
  * Функция для расчета бонусов
- * @param {number} index порядковый номер в отсортированном массиве
- * @param {number} total общее число продавцов
- * @param {Object} seller карточка продавца
+ * @param index порядковый номер в отсортированном массиве
+ * @param seller карточка продавца
  * @returns {number}
  */
 function calculateBonusByProfit(index, total, seller) { //не менять параметры
     // @TODO: Расчет бонуса от позиции в рейтинге
-    const profit = seller.profit || 0;
-
-    if (index === 0) return +(profit * 0.15).toFixed(2);
-    if (index === 1 || index === 2) return +(profit * 0.10).toFixed(2);
-    if (index === total - 1) return 0;
-    return +(profit * 0.05).toFixed(2);
+    if (index === 0) return +(seller.profit * 0.15).toFixed(2);
+    else if (index === 1 || index === 2) return +(seller.profit * 0.10).toFixed(2);
+    else if (index === total - 1) return 0;
+    else return +(seller.profit * 0.05).toFixed(2);
 }
 
 
 /**
  * Функция для анализа данных продаж
- * @param {Object} data
- * @param {Object} options
+ * @param data
+ * @param options
  * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
  */
 function analyzeSalesData(data, options) { //не менять параметры
@@ -80,7 +73,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
-        if (!seller) return;
+        if (!seller) return; // защита на случай некорректного seller_id
         seller.sales_count += 1;
         seller.revenue += record.total_amount - record.total_discount;
 
@@ -104,7 +97,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
     sellerStats.sort((a, b) => b.profit - a.profit);
 
     // @TODO: Назначение премий на основе ранжирования
-    sconst totalSellers = sellerStats.length;
+    const totalSellers = sellerStats.length;
     sellerStats.forEach((seller, index) => {
         seller.bonus = +calculateBonus(index, totalSellers, seller).toFixed(2);
 
@@ -112,6 +105,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
+
         seller.revenue = +seller.revenue.toFixed(2);
         seller.profit = +seller.profit.toFixed(2);
     });
