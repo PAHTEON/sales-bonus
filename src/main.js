@@ -39,7 +39,8 @@ function analyzeSalesData(data, options) { //не менять параметр�
         !Array.isArray(data.products) ||
         !Array.isArray(data.purchase_records) ||
         data.sellers.length === 0 ||
-        data.products.length === 0
+        data.products.length === 0 ||
+        data.purchase_records.length === 0
     ) {
         throw new Error('Некорректные входные данные');
     }
@@ -58,12 +59,14 @@ function analyzeSalesData(data, options) { //не менять параметр�
     // @TODO: Расчет выручки и прибыли для каждого продавца
 
     const sellerStats = data.sellers.map(seller => ({
-        id: seller.id,
+        seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
         revenue: 0,
         profit: 0,
         sales_count: 0,
-        products_sold: {}
+        products_sold: {},
+        bonus: 0,
+        top_products: []
     }));
 
     const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.id, s]));
@@ -81,8 +84,8 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
             const revenue = calculateRevenue(item, product);
             const cost = product.purchase_price * item.quantity;
-            seller.profit += revenue - cost;
             seller.revenue += revenue;
+            seller.profit += revenue - cost;
 
             if (!seller.products_sold[item.sku]) seller.products_sold[item.sku] = 0;
             seller.products_sold[item.sku] += item.quantity;
@@ -100,7 +103,6 @@ function analyzeSalesData(data, options) { //не менять параметр�
     sellerStats.forEach((seller, index) => {
         seller.bonus = +calculateBonus(index, totalSellers, seller).toFixed(2);
 
-        // Формирование топ-10 товаров
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
@@ -111,7 +113,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
     // @TODO: Подготовка итоговой коллекции с нужными полями
 
     return sellerStats.map(seller => ({
-        seller_id: seller.id,
+        seller_id: seller.seller_id,
         name: seller.name,
         revenue: +seller.revenue.toFixed(2),
         profit: +seller.profit.toFixed(2),
