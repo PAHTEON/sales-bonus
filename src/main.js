@@ -20,7 +20,7 @@ function calculateSimpleRevenue(purchase, _product) { //не менять пар
 function calculateBonusByProfit(index, total, seller) { //не менять параметры
     // @TODO: Расчет бонуса от позиции в рейтинге
     if (total === 0) return 0;
-    const bonus = (seller.profit / total) * 1000; // лидер получает 1000
+    const bonus = (seller.profit / total) * 1000;
     return +bonus.toFixed(2);
 }
 
@@ -60,15 +60,10 @@ function analyzeSalesData(data, options) { //не менять параметр�
             productSales[product.name] += purchase.count ? ? 0;
         });
 
-
-
-
         const top_products = Object.entries(productSales)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 3)
             .map(([name]) => name);
-
-
 
         return {
             seller_id: seller.id,
