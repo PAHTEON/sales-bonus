@@ -115,5 +115,10 @@ function analyzeSalesData(data, options) { //не менять параметр�
     return sellerStats;
 }
 
+module.exports = {
+    calculateSimpleRevenue,
+    calculateBonusByProfit,
+    analyzeSalesData
+};
 
 // @TODO: Подготовка итоговой коллекции с нужными полями
