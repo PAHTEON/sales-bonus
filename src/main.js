@@ -63,7 +63,6 @@ function analyzeSalesData(data, options) {
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
-
         seller.sales_count += 1;
 
         record.items.forEach(item => {
@@ -81,17 +80,15 @@ function analyzeSalesData(data, options) {
     });
 
     sellerStats.sort((a, b) => b.profitCents - a.profitCents);
+    const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
-        seller.profit = +(seller.profitCents / 100).toFixed(2);
-        seller.bonus = +(calculateBonus(index, sellerStats.length, {
-            revenue: seller.revenue,
-            profit: seller.profit,
-            sales_count: seller.sales_count,
-            seller_id: seller.seller_id,
-            name: seller.name
-        }).toFixed(2));
+        const revenue = +(seller.revenueCents / 100).toFixed(2);
+        const profit = +(seller.profitCents / 100).toFixed(2);
+
+        seller.revenue = revenue;
+        seller.profit = profit;
+        seller.bonus = +(calculateBonus(index, totalSellers, {...seller, revenue, profit }).toFixed(2));
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
