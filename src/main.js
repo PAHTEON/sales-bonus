@@ -98,9 +98,9 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     // @TODO: Назначение премий на основе 
     sellerStats.forEach((seller, index) => {
-        seller.revenue = +seller.revenueCents.toFixed(2);
-        seller.profit = +seller.profitCents.toFixed(2);
-        seller.bonus = +calculateBonus(index, totalSellers, seller).toFixed(2);
+        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
+        seller.profit = +(seller.profitCents / 100).toFixed(2);
+        seller.bonus = calculateBonus(index, totalSellers, seller);
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
