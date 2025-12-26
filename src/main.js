@@ -105,5 +105,3 @@ return {
     calculateBonusByProfit,
     analyzeSalesData
 };
-
-// @TODO: Подготовка итоговой коллекции с нужными полями
