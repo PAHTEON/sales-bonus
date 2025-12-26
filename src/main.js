@@ -61,8 +61,8 @@ function analyzeSalesData(data, options) { //не менять параметр�
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
-        revenueCents: 0,
-        profitCents: 0,
+        revenue: 0,
+        profit: 0,
         sales_count: 0,
         products_sold: {}
     }));
@@ -93,7 +93,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     // @TODO: Сортировка продавцов по прибыли
 
-    sellerStats.sort((a, b) => b.profitCents - a.profitCents);
+    sellerStats.sort((a, b) => b.profit - a.profit);
 
     const totalSellers = sellerStats.length;
 
