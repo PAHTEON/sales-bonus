@@ -47,6 +47,8 @@ function analyzeSalesData(data, options) {
         throw new Error('Опции должны содержать функции calculateRevenue и calculateBonus');
     }
 
+    const roundTo2 = num => Math.round((num + Number.EPSILON) * 100) / 100;
+
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
@@ -58,10 +60,6 @@ function analyzeSalesData(data, options) {
 
     const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.seller_id, s]));
     const productIndex = Object.fromEntries(data.products.map(p => [p.sku, p]));
-
-    function roundTo2(num) {
-        return Math.round((num + Number.EPSILON) * 100) / 100;
-    }
 
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
@@ -87,8 +85,6 @@ function analyzeSalesData(data, options) {
     const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        seller.revenue = roundTo2(seller.revenue);
-        seller.profit = roundTo2(seller.profit);
         seller.bonus = roundTo2(calculateBonus(index, totalSellers, seller));
 
         seller.top_products = Object.entries(seller.products_sold)
