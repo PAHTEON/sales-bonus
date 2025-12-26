@@ -32,20 +32,12 @@ function calculateBonusByProfit(index, total, seller) { //не менять па
  * @param options
  * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
  */
-function analyzeSalesData(data, options) { //не менять параметры
-    // @TODO: Проверка входных данных
-    if (!data ||
-        !Array.isArray(data.sellers) ||
-        !Array.isArray(data.products) ||
-        !Array.isArray(data.purchase_records) ||
-        data.sellers.length === 0 ||
-        data.products.length === 0 ||
-        data.purchase_records.length === 0
-    ) {
+function analyzeSalesData(data, options) {
+    if (!data || !Array.isArray(data.sellers) || !Array.isArray(data.products) || !Array.isArray(data.purchase_records) ||
+        data.sellers.length === 0 || data.products.length === 0 || data.purchase_records.length === 0) {
         throw new Error('Некорректные входные данные');
     }
 
-    // Проверка опций
     if (!options || typeof options !== 'object') {
         throw new Error('Некорректные опции');
     }
@@ -86,22 +78,21 @@ function analyzeSalesData(data, options) { //не менять параметр�
             seller.revenue += revenue;
             seller.profit += revenue - cost;
 
-            seller.products_sold[item.sku] =
-                (seller.products_sold[item.sku] || 0) + item.quantity;
+            seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
         });
     });
 
-    // @TODO: Сортировка продавцов по прибыли
-
     sellerStats.sort((a, b) => b.profit - a.profit);
-
     const totalSellers = sellerStats.length;
 
-    // @TODO: Назначение премий на основе 
+    function roundTo2(num) {
+        return Math.round((num + Number.EPSILON) * 100) / 100;
+    }
+
     sellerStats.forEach((seller, index) => {
-        seller.revenue = +seller.revenue.toFixed(2);
-        seller.profit = +seller.profit.toFixed(2);
-        seller.bonus = calculateBonus(index, totalSellers, seller);
+        seller.revenue = roundTo2(seller.revenue);
+        seller.profit = roundTo2(seller.profit);
+        seller.bonus = roundTo2(calculateBonus(index, totalSellers, seller));
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
