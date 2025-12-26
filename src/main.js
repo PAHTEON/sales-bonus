@@ -115,7 +115,7 @@ function analyzeSalesData(data, options) { //не менять параметр�
     return sellerStats;
 }
 
-module.exports = {
+return {
     calculateSimpleRevenue,
     calculateBonusByProfit,
     analyzeSalesData
