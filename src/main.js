@@ -49,8 +49,8 @@ function analyzeSalesData(data, options) {
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
-        revenue: 0,
-        profit: 0,
+        revenueCents: 0,
+        profitCents: 0,
         sales_count: 0,
         products_sold: {}
     }));
@@ -58,11 +58,8 @@ function analyzeSalesData(data, options) {
     const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.seller_id, s]));
     const productIndex = Object.fromEntries(data.products.map(p => [p.sku, p]));
 
-    function toCents(num) {
-        return Math.round(num * 100);
-    }
+    const toCents = num => Math.round(num * 100);
 
-    // Суммируем в центах, чтобы избежать ошибок округления
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
@@ -76,20 +73,25 @@ function analyzeSalesData(data, options) {
             const revenueCents = toCents(calculateRevenue(item, product));
             const profitCents = revenueCents - toCents(product.purchase_price * item.quantity);
 
-            seller.revenue += revenueCents;
-            seller.profit += profitCents;
+            seller.revenueCents += revenueCents;
+            seller.profitCents += profitCents;
 
             seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
         });
     });
 
-    sellerStats.sort((a, b) => b.profit - a.profit);
+    sellerStats.sort((a, b) => b.profitCents - a.profitCents);
 
     sellerStats.forEach((seller, index) => {
-        // Финальное округление и перевод в рубли
-        seller.revenue = +(seller.revenue / 100).toFixed(2);
-        seller.profit = +(seller.profit / 100).toFixed(2);
-        seller.bonus = +(calculateBonus(index, sellerStats.length, seller).toFixed(2));
+        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
+        seller.profit = +(seller.profitCents / 100).toFixed(2);
+        seller.bonus = +(calculateBonus(index, sellerStats.length, {
+            revenue: seller.revenue,
+            profit: seller.profit,
+            sales_count: seller.sales_count,
+            seller_id: seller.seller_id,
+            name: seller.name
+        }).toFixed(2));
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
@@ -97,6 +99,8 @@ function analyzeSalesData(data, options) {
             .slice(0, 10);
 
         delete seller.products_sold;
+        delete seller.revenueCents;
+        delete seller.profitCents;
     });
 
     return sellerStats;
