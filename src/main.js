@@ -37,7 +37,6 @@ function analyzeSalesData(data, options) {
         data.sellers.length === 0 || data.products.length === 0 || data.purchase_records.length === 0) {
         throw new Error('Некорректные входные данные');
     }
-
     if (!options || typeof options !== 'object') {
         throw new Error('Некорректные опции');
     }
@@ -63,6 +62,7 @@ function analyzeSalesData(data, options) {
         return Math.round(num * 100);
     }
 
+    // Суммируем в центах, чтобы избежать ошибок округления
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
@@ -74,8 +74,7 @@ function analyzeSalesData(data, options) {
             if (!product) return;
 
             const revenueCents = toCents(calculateRevenue(item, product));
-            const costCents = toCents(product.purchase_price * item.quantity);
-            const profitCents = revenueCents - costCents;
+            const profitCents = revenueCents - toCents(product.purchase_price * item.quantity);
 
             seller.revenue += revenueCents;
             seller.profit += profitCents;
@@ -85,12 +84,12 @@ function analyzeSalesData(data, options) {
     });
 
     sellerStats.sort((a, b) => b.profit - a.profit);
-    const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        seller.revenue = seller.revenue / 100;
-        seller.profit = seller.profit / 100;
-        seller.bonus = Math.round(calculateBonus(index, totalSellers, seller) * 100) / 100;
+        // Финальное округление и перевод в рубли
+        seller.revenue = +(seller.revenue / 100).toFixed(2);
+        seller.profit = +(seller.profit / 100).toFixed(2);
+        seller.bonus = +(calculateBonus(index, sellerStats.length, seller).toFixed(2));
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
