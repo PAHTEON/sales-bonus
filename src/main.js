@@ -47,8 +47,6 @@ function analyzeSalesData(data, options) {
         throw new Error('Опции должны содержать функции calculateRevenue и calculateBonus');
     }
 
-    const roundTo2 = num => Math.round((num + Number.EPSILON) * 100) / 100;
-
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
@@ -61,6 +59,10 @@ function analyzeSalesData(data, options) {
     const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.seller_id, s]));
     const productIndex = Object.fromEntries(data.products.map(p => [p.sku, p]));
 
+    function round2(num) {
+        return Math.round((num + Number.EPSILON) * 100) / 100;
+    }
+
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
@@ -71,12 +73,12 @@ function analyzeSalesData(data, options) {
             const product = productIndex[item.sku];
             if (!product) return;
 
-            const revenue = roundTo2(calculateRevenue(item, product));
-            const cost = roundTo2(product.purchase_price * item.quantity);
-            const profit = roundTo2(revenue - cost);
+            const revenue = round2(calculateRevenue(item, product));
+            const cost = round2(product.purchase_price * item.quantity);
+            const profit = round2(revenue - cost);
 
-            seller.revenue = roundTo2(seller.revenue + revenue);
-            seller.profit = roundTo2(seller.profit + profit);
+            seller.revenue = round2(seller.revenue + revenue);
+            seller.profit = round2(seller.profit + profit);
 
             seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
         });
@@ -86,13 +88,11 @@ function analyzeSalesData(data, options) {
     const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        seller.bonus = roundTo2(calculateBonus(index, totalSellers, seller));
-
+        seller.bonus = round2(calculateBonus(index, totalSellers, seller));
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
-
         delete seller.products_sold;
     });
 
