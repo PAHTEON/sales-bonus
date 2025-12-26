@@ -80,11 +80,11 @@ function analyzeSalesData(data, options) { //не менять параметр�
             const product = productIndex[item.sku];
             if (!product) return;
 
-            const revenue = calculateRevenue(item, product);
-            const cost = product.purchase_price * item.quantity;
+            const revenueCents = Math.round(calculateRevenue(item, product) * 100);
+            const costCents = Math.round(product.purchase_price * item.quantity * 100);
 
-            seller.revenueCents += revenue;
-            seller.profitCents += revenue - cost;
+            seller.revenueCents += revenueCents;
+            seller.profitCents += revenueCents - costCents;
 
             seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
         });
