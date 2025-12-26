@@ -80,13 +80,14 @@ function analyzeSalesData(data, options) { //не менять параметр�
             const product = productIndex[item.sku];
             if (!product) return;
 
-            const revenueCents = Math.round(calculateRevenue(item, product) * 100);
-            const costCents = Math.round(product.purchase_price * item.quantity * 100);
+            const revenue = calculateRevenue(item, product);
+            const cost = product.purchase_price * item.quantity;
 
-            seller.revenueCents += revenueCents;
-            seller.profitCents += revenueCents - costCents;
+            seller.revenue += revenue;
+            seller.profit += revenue - cost;
 
-            seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
+            seller.products_sold[item.sku] =
+                (seller.products_sold[item.sku] || 0) + item.quantity;
         });
     });
 
@@ -98,8 +99,8 @@ function analyzeSalesData(data, options) { //не менять параметр�
 
     // @TODO: Назначение премий на основе 
     sellerStats.forEach((seller, index) => {
-        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
-        seller.profit = +(seller.profitCents / 100).toFixed(2);
+        seller.revenue = +seller.revenue.toFixed(2);
+        seller.profit = +seller.profit.toFixed(2);
         seller.bonus = calculateBonus(index, totalSellers, seller);
 
         seller.top_products = Object.entries(seller.products_sold)
@@ -107,8 +108,6 @@ function analyzeSalesData(data, options) { //не менять параметр�
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
 
-        delete seller.revenueCents;
-        delete seller.profitCents;
         delete seller.products_sold;
     });
 
