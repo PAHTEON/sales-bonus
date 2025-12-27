@@ -87,10 +87,9 @@ function analyzeSalesData(data, options) {
     const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-
         const bonus = calculateBonus(index, totalSellers, {
             ...seller,
-            profit: profitExact
+            profit: seller.profit
         });
 
         seller.bonus = Math.round(bonus * 100) / 100;
@@ -103,7 +102,6 @@ function analyzeSalesData(data, options) {
             .slice(0, 10);
 
         delete seller.products_sold;
-
     });
 
     return sellerStats;
