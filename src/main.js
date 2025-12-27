@@ -112,8 +112,8 @@ function analyzeSalesData(data, options) {
     // Назначение бонусов и формирование топ-10 товаров
     sellerStats.forEach((seller, index) => {
         // Округляем и сохраняем финальные значения
-        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
-        seller.profit = +(seller.profitCents / 100).toFixed(2);
+        seller.revenue = Math.round(seller.revenueCents) / 100;
+        seller.profit = Math.round(seller.profitCents) / 100;
 
         // Бонус
         seller.bonus = Number(calculateBonus(index, sellerStats.length, seller).toFixed(2));
