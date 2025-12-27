@@ -50,18 +50,12 @@ function analyzeSalesData(data, options) {
         throw new Error('Опции должны содержать функции calculateRevenue и calculateBonus');
     }
 
-    const toCents = (num) => {
-        if (typeof num !== 'number' || isNaN(num) || num < 0) {
-            throw new Error(`Недопустимое значение для конвертации в копейки: ${num}`);
-        }
-        return Math.floor(num * 100);
-    };
 
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
-        revenueCents: 0,
-        profitCents: 0,
+        revenue: 0,
+        profit: 0,
         sales_count: 0,
         products_sold: {}
     }));
@@ -78,22 +72,21 @@ function analyzeSalesData(data, options) {
             const product = productIndex[item.sku];
             if (!product) return;
 
-            const revenueCents = toCents(calculateRevenue(item, product));
-            const costCents = toCents(product.purchase_price * item.quantity);
-            const profitCents = revenueCents - costCents;
+            const revenue = calculateRevenue(item, product);
+            const cost = product.purchase_price * item.quantity;
+            const profit = revenue - cost;
 
-            seller.revenueCents += revenueCents;
-            seller.profitCents += profitCents;
+            seller.revenue += revenue;
+            seller.profit += profit;
 
             seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
         });
     });
 
-    sellerStats.sort((a, b) => b.profitCents - a.profitCents);
+    sellerStats.sort((a, b) => b.profit - a.profit);
     const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        const profitExact = seller.profitCents / 100;
 
         const bonus = calculateBonus(index, totalSellers, {
             ...seller,
@@ -101,8 +94,8 @@ function analyzeSalesData(data, options) {
         });
 
         seller.bonus = Math.round(bonus * 100) / 100;
-        seller.revenue = Math.round(seller.revenueCents) / 100;
-        seller.profit = Math.round(profitExact * 100) / 100;
+        seller.revenue = Math.round(seller.revenue * 100) / 100;
+        seller.profit = Math.round(seller.profit * 100) / 100;
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
@@ -110,8 +103,7 @@ function analyzeSalesData(data, options) {
             .slice(0, 10);
 
         delete seller.products_sold;
-        delete seller.revenueCents;
-        delete seller.profitCents;
+
     });
 
     return sellerStats;
