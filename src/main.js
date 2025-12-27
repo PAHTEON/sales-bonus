@@ -88,11 +88,13 @@ function analyzeSalesData(data, options) {
             // Рассчёт выручки и прибыли
             const revenue = calculateRevenue(item, product); // выручка в рублях
             const cost = product.purchase_price * item.quantity; // себестоимость
-            const profit = revenue - cost;
+            const revenueCents = Math.round(revenue * 100);
+            const costCents = Math.round(cost * 100);
+            const profitCents = revenueCents - costCents;
 
             // Увеличиваем накопленные суммы в копейках
-            seller.revenueCents += Math.round(revenue * 100);
-            seller.profitCents += Math.round(profit * 100);
+            seller.revenueCents += revenueCents;
+            seller.profitCents += profitCents;
 
             // Учёт количества проданных товаров
             if (!seller.products_sold[item.sku]) {
