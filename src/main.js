@@ -54,7 +54,7 @@ function analyzeSalesData(data, options) {
         if (typeof num !== 'number' || isNaN(num) || num < 0) {
             throw new Error(`Недопустимое значение для конвертации в копейки: ${num}`);
         }
-        return Math.round(num * 100);
+        return Math.floor(num * 100);
     };
 
     const sellerStats = data.sellers.map(seller => ({
