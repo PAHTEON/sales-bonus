@@ -36,20 +36,30 @@ function calculateBonusByProfit(index, total, seller) { //не менять па
  * @param options
  * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
  */
-function analyzeSalesData(options) {
+function analyzeSalesData(data, options) {
     if (!options || typeof options !== 'object') {
-        throw new Error('Некорректные опции');
+        throw new Error('Invalid options');
     }
 
-    const { sellers, products, purchase_records } = options;
+    const { calculateRevenue, calculateBonus } = options;
 
-    if (!purchase_records) throw new Error('Отсутствуют данные о продажах');
-    if (!sellers) throw new Error('Отсутствуют продавцы');
-    if (!products) throw new Error('Отсутствуют товары');
+    if (typeof calculateRevenue !== 'function' || typeof calculateBonus !== 'function') {
+        throw new Error('Invalid options');
+    }
 
-    if (!sellers.length) throw new Error('Пустой список продавцов');
-    if (!products.length) throw new Error('Пустой список товаров');
-    if (!purchase_records.length) throw new Error('Пустой список продаж');
+    if (!data) throw new Error('Отсутствуют данные');
+    if (!data.sellers) throw new Error('Отсутствуют sellers');
+    if (!data.products) throw new Error('Отсутствуют products');
+    if (!data.purchase_records) throw new Error('Отсутствуют purchase_records');
+
+    const { sellers, products, purchase_records } = data;
+
+    if (!sellers.length) throw new Error('Пустой список sellers');
+    if (!products.length) throw new Error('Пустой список products');
+    if (!purchase_records.length) throw new Error('Пустой список purchase_records');
+
+    const productMap = {};
+    products.forEach(p => productMap[p.id] = p);
 
     const sellerStats = sellers.map(seller => ({
         seller_id: seller.id,
@@ -61,44 +71,36 @@ function analyzeSalesData(options) {
         top_products: []
     }));
 
-    const productMap = {};
-    products.forEach(p => {
-        productMap[p.id] = p;
-    });
-
     const sellerMap = {};
-    sellerStats.forEach(s => {
-        sellerMap[s.seller_id] = s;
-    });
+    sellerStats.forEach(s => sellerMap[s.seller_id] = s);
 
     for (const record of purchase_records) {
         const seller = sellerMap[record.seller_id];
+        seller.sales_count += 1; // ✔ один чек
 
         for (const item of record.items) {
             const product = productMap[item.product_id];
 
-            // 🔴 ВАЖНО: округляем КАЖДУЮ покупку
             const revenue = Number(
-                calculateSimpleRevenue(item, product).toFixed(2)
+                calculateRevenue(item, product).toFixed(2)
             );
 
             const profit = Number(
-                (revenue * product.profit_margin).toFixed(2)
+                (revenue * product.profit_margin / 100).toFixed(2)
             );
 
             seller.revenue += revenue;
             seller.profit += profit;
-            seller.sales_count += item.quantity;
 
-            const topProduct = seller.top_products.find(
-                p => p.product_id === item.product_id
+            const existing = seller.top_products.find(
+                p => p.sku === product.sku
             );
 
-            if (topProduct) {
-                topProduct.quantity += item.quantity;
+            if (existing) {
+                existing.quantity += item.quantity;
             } else {
                 seller.top_products.push({
-                    product_id: item.product_id,
+                    sku: product.sku,
                     quantity: item.quantity
                 });
             }
@@ -109,18 +111,15 @@ function analyzeSalesData(options) {
         seller.revenue = Number(seller.revenue.toFixed(2));
         seller.profit = Number(seller.profit.toFixed(2));
 
-        seller.top_products.sort((a, b) => b.quantity - a.quantity);
-        seller.top_products = seller.top_products.slice(0, 10);
+        seller.top_products
+            .sort((a, b) => b.quantity - a.quantity)
+            .splice(10);
     });
 
     sellerStats.sort((a, b) => b.profit - a.profit);
 
     sellerStats.forEach((seller, index) => {
-        seller.bonus = calculateBonusByProfit(
-            index,
-            sellerStats.length,
-            seller
-        );
+        seller.bonus = calculateBonus(index, sellerStats.length, seller);
     });
 
     return sellerStats;
