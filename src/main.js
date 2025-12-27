@@ -53,80 +53,68 @@ function analyzeSalesData(data, options) {
     if (!options || typeof options !== 'object') {
         throw new Error('Некорректные опции');
     }
+
     const { calculateRevenue, calculateBonus } = options;
     if (typeof calculateRevenue !== 'function' || typeof calculateBonus !== 'function') {
         throw new Error('Чего-то не хватает в опциях');
     }
 
-    // Подготовка промежуточных данных
+    // Подготовка продавцов
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
-        revenueCents: 0, // считаем в копейках
-        profitCents: 0, // считаем в копейках
+        revenue: 0,
+        profit: 0,
         sales_count: 0,
         products_sold: {}
     }));
 
-    // Индексация продавцов и товаров
-    const sellerIndex = Object.fromEntries(sellerStats.map(seller => [seller.seller_id, seller]));
-    const productIndex = Object.fromEntries(data.products.map(product => [product.sku, product]));
+    const sellerIndex = Object.fromEntries(
+        sellerStats.map(seller => [seller.seller_id, seller])
+    );
 
-    // Перебор всех чеков
+    const productIndex = Object.fromEntries(
+        data.products.map(product => [product.sku, product])
+    );
+
+    // Перебор чеков
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
 
-        // Увеличиваем количество продаж
         seller.sales_count += 1;
 
-        // Проходим по всем товарам в чеке
         record.items.forEach(item => {
             const product = productIndex[item.sku];
             if (!product) return;
 
-            // Рассчёт выручки и прибыли
-            const revenue = calculateRevenue(item, product); // выручка в рублях
-            const cost = product.purchase_price * item.quantity; // себестоимость
+            const revenue = calculateRevenue(item, product);
+            const cost = product.purchase_price * item.quantity;
+            const profit = revenue - cost;
 
-            // Округляем до копеек отдельно для точности расчетов
-            const revenueCents = Math.round(revenue * 100);
-            const costCents = Math.round(cost * 100);
-            const profitCents = revenueCents - costCents;
+            seller.revenue += revenue;
+            seller.profit += profit;
 
-            // Увеличиваем накопленные суммы в копейках
-            seller.revenueCents += revenueCents;
-            seller.profitCents += profitCents;
-
-            // Учёт количества проданных товаров
-            if (!seller.products_sold[item.sku]) {
-                seller.products_sold[item.sku] = 0;
-            }
-            seller.products_sold[item.sku] += item.quantity;
+            seller.products_sold[item.sku] =
+                (seller.products_sold[item.sku] || 0) + item.quantity;
         });
     });
 
-    // Сортировка продавцов по прибыли
-    sellerStats.sort((a, b) => b.profitCents - a.profitCents);
+    // Сортировка по прибыли
+    sellerStats.sort((a, b) => b.profit - a.profit);
 
-    // Назначение бонусов и формирование топ-10 товаров
+    // Финальные значения
     sellerStats.forEach((seller, index) => {
-        // Округляем и сохраняем финальные значения
-        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
-        seller.profit = +(seller.profitCents / 100).toFixed(2);
+        seller.revenue = Number(seller.revenue.toFixed(2));
+        seller.profit = Number(seller.profit.toFixed(2));
 
-        // Бонус
-        seller.bonus = Number(calculateBonus(index, sellerStats.length, seller).toFixed(2));
+        seller.bonus = calculateBonus(index, sellerStats.length, seller);
 
-        // Топ-10 товаров
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
 
-        // Удаляем промежуточные поля
-        delete seller.revenueCents;
-        delete seller.profitCents;
         delete seller.products_sold;
     });
 
