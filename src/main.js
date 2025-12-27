@@ -50,6 +50,13 @@ function analyzeSalesData(data, options) {
         throw new Error('Опции должны содержать функции calculateRevenue и calculateBonus');
     }
 
+    const toCents = (num) => {
+        if (typeof num !== 'number' || isNaN(num) || num < 0) {
+            throw new Error(`Недопустимое значение для конвертации в копейки: ${num}`);
+        }
+        return Math.round(num * 100);
+    };
+
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
@@ -62,8 +69,6 @@ function analyzeSalesData(data, options) {
     const sellerIndex = Object.fromEntries(sellerStats.map(s => [s.seller_id, s]));
     const productIndex = Object.fromEntries(data.products.map(p => [p.sku, p]));
 
-    const toCents = num => Math.round(num * 100);
-
     data.purchase_records.forEach(record => {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
@@ -74,7 +79,8 @@ function analyzeSalesData(data, options) {
             if (!product) return;
 
             const revenueCents = toCents(calculateRevenue(item, product));
-            const profitCents = revenueCents - toCents(product.purchase_price * item.quantity);
+            const costCents = toCents(product.purchase_price * item.quantity);
+            const profitCents = revenueCents - costCents;
 
             seller.revenueCents += revenueCents;
             seller.profitCents += profitCents;
@@ -87,8 +93,9 @@ function analyzeSalesData(data, options) {
     const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        seller.revenue = seller.revenueCents / 100; // Конвертация без округления
-        seller.profit = seller.profitCents / 100;
+        // Явное округление до 2 знаков после запятой
+        seller.revenue = parseFloat((seller.revenueCents / 100).toFixed(2));
+        seller.profit = parseFloat((seller.profitCents / 100).toFixed(2));
 
         seller.bonus = calculateBonus(
             index,
