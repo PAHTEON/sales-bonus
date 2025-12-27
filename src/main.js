@@ -93,14 +93,15 @@ function analyzeSalesData(data, options) {
     const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        // Явное округление до 2 знаков после запятой
-        seller.revenue = parseFloat((seller.revenueCents / 100).toFixed(2));
-        seller.profit = parseFloat((seller.profitCents / 100).toFixed(2));
+        // revenue и profit в рублях с 2 знаками после запятой
+        seller.revenue = +(seller.revenueCents / 100).toFixed(2);
+        seller.profit = +(seller.profitCents / 100).toFixed(2);
 
-        seller.bonus = calculateBonus(
+        // бонус на основе уже округлённого profit
+        seller.bonus = +(calculateBonus(
             index,
-            totalSellers, {...seller, revenue: seller.revenue, profit: seller.profit }
-        );
+            totalSellers, {...seller, profit: seller.profit }
+        ).toFixed(2));
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
