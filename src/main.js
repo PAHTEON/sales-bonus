@@ -79,9 +79,6 @@ function analyzeSalesData(data, options) {
             seller.revenue += revenue;
             seller.profit += profit;
 
-            seller.revenue += revenue;
-            seller.profit += profit;
-
             seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
         });
     });
