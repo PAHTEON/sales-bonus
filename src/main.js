@@ -18,15 +18,15 @@ function calculateSimpleRevenue(purchase, _product) { //не менять пар
  */
 function calculateBonusByProfit(index, total, seller) { //не менять параметры
     // @TODO: Расчет бонуса от позиции в рейтинге
-    const profit = seller.profit;
-    let bonus = 0;
+    const profitCents = seller.profit; // уже в копейках
+    let bonusCents = 0;
 
-    if (index === 0) bonus = profit * 0.15;
-    else if (index === 1 || index === 2) bonus = profit * 0.10;
-    else if (index === total - 1) bonus = 0;
-    else bonus = profit * 0.05;
+    if (index === 0) bonusCents = profitCents * 15 / 100;
+    else if (index === 1 || index === 2) bonusCents = profitCents * 10 / 100;
+    else if (index === total - 1) bonusCents = 0;
+    else bonusCents = profitCents * 5 / 100;
 
-    return Math.round(bonus * 100) / 100;
+    return Math.round(bonusCents);
 }
 
 
@@ -93,13 +93,10 @@ function analyzeSalesData(data, options) {
     const totalSellers = sellerStats.length;
 
     sellerStats.forEach((seller, index) => {
-        // бонус в копейках
-        const bonusCents = Math.round(
-            calculateBonus(index, totalSellers, {
-                ...seller,
-                profit: seller.profitCents / 100,
-            }) * 100
-        );
+        const bonusCents = calculateBonus(index, totalSellers, {
+            ...seller,
+            profit: seller.profitCents // передаём в копейках
+        });
 
         seller.bonus = bonusCents / 100;
         seller.revenue = seller.revenueCents / 100;
