@@ -42,6 +42,7 @@ function analyzeSalesData(data, options) {
     }
 
     const { calculateRevenue, calculateBonus } = options;
+
     if (typeof calculateRevenue !== 'function' || typeof calculateBonus !== 'function') {
         throw new Error('Некорректные опции');
     }
@@ -57,11 +58,12 @@ function analyzeSalesData(data, options) {
         throw new Error('Некорректные входные данные');
     }
 
-    // Индекс товаров по id
+
     const productMap = {};
-    data.products.forEach(p => {
-        productMap[p.id] = p;
+    data.products.forEach(product => {
+        productMap[product.id] = product;
     });
+
 
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
@@ -73,18 +75,15 @@ function analyzeSalesData(data, options) {
     }));
 
     const sellerMap = {};
-    sellerStats.forEach(s => {
-        sellerMap[s.seller_id] = s;
+    sellerStats.forEach(seller => {
+        sellerMap[seller.seller_id] = seller;
     });
 
-    // Перебор чеков
     for (const record of data.purchase_records) {
         const seller = sellerMap[record.seller_id];
         if (!seller) continue;
 
         seller.sales_count += 1;
-
-        seller.revenue += record.total_amount - record.total_discount;
 
         for (const item of record.items) {
             const product = productMap[item.product_id];
@@ -93,6 +92,7 @@ function analyzeSalesData(data, options) {
             const revenueItem = calculateRevenue(item, product);
             const cost = product.purchase_price * item.quantity;
 
+            seller.revenue += revenueItem;
             seller.profit += revenueItem - cost;
 
             seller.products_sold[product.sku] =
@@ -103,7 +103,7 @@ function analyzeSalesData(data, options) {
     // Сортировка по прибыли
     sellerStats.sort((a, b) => b.profit - a.profit);
 
-    // Финализация
+    // Финализация данных
     sellerStats.forEach((seller, index) => {
         seller.revenue = Number(seller.revenue.toFixed(2));
         seller.profit = Number(seller.profit.toFixed(2));
