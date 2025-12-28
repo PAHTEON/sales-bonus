@@ -37,7 +37,6 @@ function calculateBonusByProfit(index, total, seller) { //не менять па
  * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
  */
 function analyzeSalesData(data, options) {
-    // Проверки
     if (!options || typeof options !== 'object') {
         throw new Error('Некорректные опции');
     }
@@ -58,10 +57,10 @@ function analyzeSalesData(data, options) {
         throw new Error('Некорректные входные данные');
     }
 
-    // Индексы
+    // Индекс товаров по id
     const productMap = {};
     data.products.forEach(p => {
-        productMap[p.sku] = p;
+        productMap[p.id] = p;
     });
 
     const sellerStats = data.sellers.map(seller => ({
@@ -85,19 +84,19 @@ function analyzeSalesData(data, options) {
 
         seller.sales_count += 1;
 
+        seller.revenue += record.total_amount - record.total_discount;
+
         for (const item of record.items) {
-            const product = productMap[item.sku];
+            const product = productMap[item.product_id];
             if (!product) continue;
 
-            const revenue = calculateRevenue(item, product);
+            const revenueItem = calculateRevenue(item, product);
             const cost = product.purchase_price * item.quantity;
-            const profit = revenue - cost;
 
-            seller.revenue += revenue;
-            seller.profit += profit;
+            seller.profit += revenueItem - cost;
 
-            seller.products_sold[item.sku] =
-                (seller.products_sold[item.sku] || 0) + item.quantity;
+            seller.products_sold[product.sku] =
+                (seller.products_sold[product.sku] || 0) + item.quantity;
         }
     }
 
