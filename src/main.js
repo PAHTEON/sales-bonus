@@ -121,9 +121,3 @@ function analyzeSalesData(data, options) {
 
     return sellerStats;
 }
-
-return {
-    calculateSimpleRevenue,
-    calculateBonusByProfit,
-    analyzeSalesData
-};
