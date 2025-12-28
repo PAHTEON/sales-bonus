@@ -58,13 +58,13 @@ function analyzeSalesData(data, options) {
         throw new Error('Некорректные входные данные');
     }
 
-
+    // Индекс продуктов
     const productMap = {};
     data.products.forEach(product => {
         productMap[product.id] = product;
     });
 
-
+    // Статистика продавцов
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
@@ -79,6 +79,7 @@ function analyzeSalesData(data, options) {
         sellerMap[seller.seller_id] = seller;
     });
 
+    // Перебор чеков
     for (const record of data.purchase_records) {
         const seller = sellerMap[record.seller_id];
         if (!seller) continue;
@@ -90,7 +91,7 @@ function analyzeSalesData(data, options) {
             if (!product) continue;
 
             const revenueItem = calculateRevenue(item, product);
-            const cost = product.purchase_price * item.quantity;
+            const cost = product.cost_price * item.quantity;
 
             seller.revenue += revenueItem;
             seller.profit += revenueItem - cost;
@@ -103,7 +104,7 @@ function analyzeSalesData(data, options) {
     // Сортировка по прибыли
     sellerStats.sort((a, b) => b.profit - a.profit);
 
-    // Финализация данных
+    // Финализация
     sellerStats.forEach((seller, index) => {
         seller.revenue = Number(seller.revenue.toFixed(2));
         seller.profit = Number(seller.profit.toFixed(2));
