@@ -42,7 +42,6 @@ function analyzeSalesData(data, options) {
     }
 
     const { calculateRevenue, calculateBonus } = options;
-
     if (typeof calculateRevenue !== 'function' || typeof calculateBonus !== 'function') {
         throw new Error('Некорректные опции');
     }
@@ -58,13 +57,13 @@ function analyzeSalesData(data, options) {
         throw new Error('Некорректные входные данные');
     }
 
-    // Индекс продуктов
+    // Индекс товаров по sku
     const productMap = {};
     data.products.forEach(product => {
-        productMap[product.id] = product;
+        productMap[product.sku] = product;
     });
 
-    // Статистика продавцов
+    // Инициализация продавцов
     const sellerStats = data.sellers.map(seller => ({
         seller_id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
@@ -87,17 +86,17 @@ function analyzeSalesData(data, options) {
         seller.sales_count += 1;
 
         for (const item of record.items) {
-            const product = productMap[item.product_id];
+            const product = productMap[item.sku];
             if (!product) continue;
 
-            const revenueItem = calculateRevenue(item, product);
-            const cost = product.cost_price * item.quantity;
+            const revenue = calculateRevenue(item, product);
+            const cost = product.purchase_price * item.count;
 
-            seller.revenue += revenueItem;
-            seller.profit += revenueItem - cost;
+            seller.revenue += revenue;
+            seller.profit += revenue - cost;
 
-            seller.products_sold[product.sku] =
-                (seller.products_sold[product.sku] || 0) + item.quantity;
+            seller.products_sold[item.sku] =
+                (seller.products_sold[item.sku] || 0) + item.count;
         }
     }
 
