@@ -26,7 +26,8 @@ function calculateBonusByProfit(index, total, seller) { //не менять па
     else if (index === total - 1) bonus = 0;
     else bonus = profit * 0.05;
 
-    return Math.round(bonus * 100) / 100;
+    // Округляем до 2 знаков после запятой
+    return Number(bonus.toFixed(2));
 }
 
 
