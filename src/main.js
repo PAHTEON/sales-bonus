@@ -90,13 +90,13 @@ function analyzeSalesData(data, options) {
             if (!product) continue;
 
             const revenue = calculateRevenue(item, product);
-            const cost = product.purchase_price * item.count;
+            const cost = product.purchase_price * item.quantity;
 
             seller.revenue += revenue;
             seller.profit += revenue - cost;
 
             seller.products_sold[item.sku] =
-                (seller.products_sold[item.sku] || 0) + item.count;
+                (seller.products_sold[item.sku] || 0) + item.quantity;
         }
     }
 
